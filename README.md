@@ -8,3 +8,4 @@ This repository contains various tree data structures implementations in C++.
 - [Adelson-Velsky and Landis Tree (AVL)]
 - [Red-Black Tree (RBT)]
 - [Prefix Tree (Trie)]
+- [Min and Max Heaps (Heap)]
