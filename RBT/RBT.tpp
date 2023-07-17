@@ -174,6 +174,11 @@ void RBT<T>::levelorder(F visit) {
       q.push(tmp->right);
     }
     visit(tmp->val);
+    if (tmp->color == Color::BLACK) { 
+      std::cout << "(black) ";
+    } else {
+      std::cout << "(red) ";
+    }
   }
 }
 
@@ -248,18 +253,18 @@ void RBT<T>::remove(const T& val) {
     x = removing_node->right;
     transplant(removing_node, removing_node->right);
   } else if (removing_node->right == NIL) {
-    x = removing_node->left;
-    transplant(removing_node, removing_node->left);
+      x = removing_node->left;
+      transplant(removing_node, removing_node->left);
   } else {
     tmp = minimum(removing_node->right);
     original_color = tmp->color;
     x = tmp->right;
-    if (tmp != removing_node->right) {
+    if (tmp->parent == removing_node) {
+      x->parent = tmp;
+    } else {
       transplant(tmp, tmp->right);  
       tmp->right = removing_node->right;
       tmp->right->parent = tmp;
-    } else {
-      x->parent = removing_node;
     }
     transplant(removing_node, tmp);
     tmp->left = removing_node->left;
@@ -286,7 +291,7 @@ void RBT<T>::transplant(Node* node1, Node* node2) {
 
 template <typename T>
 typename RBT<T>::Node* RBT<T>::minimum(Node* node) {
-    while (node && node->left && node != NIL && node->left != NIL) {
+    while (node->left != NIL) {
       node = node->left;
     }
   return node;
@@ -306,17 +311,19 @@ void RBT<T>::removeFixUp(Node* x) {
       if (sibling->left->color == Color::BLACK && sibling->right->color == Color::BLACK) {
         sibling->color = Color::RED;
         x = x->parent;
-      } else if (sibling->right->color == Color::BLACK) {
-        sibling->left->color = Color::BLACK;
-        sibling->color = Color::RED;
-        rightRotate(sibling);
-        sibling = x->parent->right;
+      } else {
+          if (sibling->right->color == Color::BLACK) {
+            sibling->left->color = Color::BLACK;
+            sibling->color = Color::RED;
+            rightRotate(sibling);
+            sibling = x->parent->right;
+          }
+          sibling->color = x->parent->color;
+          sibling->right->color = Color::BLACK;
+          x->parent->color = Color::BLACK;
+          leftRotate(x->parent);
+          x = m_root;
       }
-      sibling->color = x->parent->color;
-      sibling->right->color = Color::BLACK;
-      x->parent->color = Color::BLACK;
-      leftRotate(x->parent);
-      x = m_root;
     } else {
       Node* sibling = x->parent->left;
       if (sibling->color == Color::RED) {
@@ -328,17 +335,19 @@ void RBT<T>::removeFixUp(Node* x) {
       if (sibling->left->color == Color::BLACK && sibling->right->color == Color::BLACK) {
         sibling->color = Color::RED;
         x = x->parent;
-      } else if (sibling->left->color == Color::BLACK) {
-        sibling->right->color = Color::BLACK;
-        sibling->color = Color::RED;
-        leftRotate(sibling);
-        sibling = x->parent->left;
+      } else {
+          if (sibling->left->color == Color::BLACK) {
+            sibling->right->color = Color::BLACK;
+            sibling->color = Color::RED;
+            leftRotate(sibling);
+            sibling = x->parent->left;
+          }
+          sibling->color = x->parent->color;
+          x->parent->color = Color::BLACK;
+          sibling->left->color = Color::BLACK;
+          rightRotate(x->parent);
+          x = m_root;      
       }
-      sibling->color = x->parent->color;
-      x->parent->color = Color::BLACK;
-      sibling->left->color = Color::BLACK;
-      rightRotate(x->parent);
-      x = m_root;      
     }
   }
   x->color = Color::BLACK;
@@ -346,6 +355,9 @@ void RBT<T>::removeFixUp(Node* x) {
 
 template <typename T>
 void RBT<T>::clear() {
+  if (m_root == NIL) {
+    return;
+  }
   std::queue<Node*> q;
   q.push(m_root);
   while (!q.empty()) {
